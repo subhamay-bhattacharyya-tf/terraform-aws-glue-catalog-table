@@ -1,244 +1,138 @@
-# Terraform AWS S3 Bucket Module
+# Terraform AWS Glue Catalog Table Module
 
 ![Release](https://github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/actions/workflows/ci.yaml/badge.svg)&nbsp;![AWS](https://img.shields.io/badge/AWS-232F3E?logo=amazonaws&logoColor=white)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/2983112d16d4dd7076415b0c523f1c98/raw/terraform-aws-glue-catalog-table.json?)
 
-A Terraform module for creating and managing AWS S3 buckets with optional encryption (SSE-S3 or SSE-KMS), versioning, folder structure, bucket policy, and event notifications.
+A Terraform module for creating and managing AWS Glue Catalog Tables with configurable schema, storage descriptors, partition keys, and SerDe configurations.
 
 ## Features
 
-- JSON-style configuration input
-- Server-side encryption with SSE-S3 (AES256) or SSE-KMS
-- Configurable versioning
-- Automatic folder/prefix creation
-- Public access blocked by default
-- Optional bucket policy
-- Event notifications for SQS, SNS, and Lambda
+- JSON-style configuration input via single object variable
+- Support for multiple table types (EXTERNAL_TABLE, GOVERNED, VIRTUAL_VIEW)
+- Configurable storage descriptors with columns and SerDe info
+- Partition key support for efficient data querying
+- Sort columns and skewed info configuration
+- Schema registry reference support
+- Target table configuration for resource links
 - Built-in input validation
-
-## Modules
-
-| Module | Description |
-|--------|-------------|
-| [bucket](modules/bucket) | S3 bucket with encryption, versioning, and folders |
-| [event-notification](modules/event-notification) | S3 event notifications for SQS, SNS, and Lambda |
 
 ## Usage
 
-### Basic S3 Bucket
+### Basic Glue Catalog Table (CSV)
 
 ```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
+module "glue_catalog_table" {
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table?ref=main"
 
-  s3_config = {
-    bucket_name = "my-bucket"
-  }
-}
-```
+  glue_table_config = {
+    table_name    = "my_table"
+    database_name = "my_database"
+    table_type    = "EXTERNAL_TABLE"
 
-### S3 Bucket with Versioning
+    storage_descriptor = {
+      location      = "s3://my-bucket/data/"
+      input_format  = "org.apache.hadoop.mapred.TextInputFormat"
+      output_format = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
-```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
-
-  s3_config = {
-    bucket_name = "my-versioned-bucket"
-    versioning  = true
-  }
-}
-```
-
-### S3 Bucket with SSE-S3 Encryption
-
-```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
-
-  s3_config = {
-    bucket_name   = "my-encrypted-bucket"
-    sse_algorithm = "AES256"
-  }
-}
-```
-
-### S3 Bucket with SSE-KMS Encryption
-
-```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
-
-  s3_config = {
-    bucket_name   = "my-kms-bucket"
-    sse_algorithm = "aws:kms"
-    kms_key_alias = "my-kms-key"
-  }
-}
-```
-
-### S3 Bucket with Folders
-
-```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
-
-  s3_config = {
-    bucket_name = "my-data-bucket"
-    bucket_keys = ["raw-data/csv", "raw-data/json", "processed"]
-  }
-}
-```
-
-### S3 Bucket with Bucket Policy
-
-```hcl
-module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
-
-  s3_config = {
-    bucket_name   = "my-policy-bucket"
-    bucket_policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Sid       = "AllowSSLRequestsOnly"
-          Effect    = "Deny"
-          Principal = "*"
-          Action    = "s3:*"
-          Resource = [
-            "arn:aws:s3:::my-policy-bucket",
-            "arn:aws:s3:::my-policy-bucket/*"
-          ]
-          Condition = {
-            Bool = {
-              "aws:SecureTransport" = "false"
-            }
-          }
-        }
+      columns = [
+        { name = "id", type = "int" },
+        { name = "name", type = "string" },
+        { name = "created_at", type = "timestamp" }
       ]
-    })
+
+      ser_de_info = {
+        serialization_library = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+        parameters = {
+          "field.delim" = ","
+        }
+      }
+    }
   }
 }
 ```
 
-### S3 Event Notification with SQS
+### Glue Catalog Table with Parquet Format
 
 ```hcl
-module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
+module "glue_catalog_table" {
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table?ref=main"
 
-  bucket_name = "my-bucket"
+  glue_table_config = {
+    table_name    = "events_parquet"
+    database_name = "analytics_db"
+    table_type    = "EXTERNAL_TABLE"
 
-  sqs_notifications = [
-    {
-      id            = "snowpipe-notification"
-      queue_arn     = "arn:aws:sqs:us-east-1:123456789012:my-queue"
-      events        = ["s3:ObjectCreated:*"]
-      filter_prefix = "raw-data/"
-      filter_suffix = ".csv"
+    storage_descriptor = {
+      location      = "s3://my-bucket/parquet-data/"
+      input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+      output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+      compressed    = true
+
+      columns = [
+        { name = "event_id", type = "string" },
+        { name = "event_time", type = "timestamp" },
+        { name = "payload", type = "string" }
+      ]
+
+      ser_de_info = {
+        serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+        parameters = {
+          "serialization.format" = "1"
+        }
+      }
     }
-  ]
+  }
 }
 ```
 
-### S3 Event Notification with SNS
+### Glue Catalog Table with Partition Keys
 
 ```hcl
-module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
+module "glue_catalog_table" {
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table?ref=main"
 
-  bucket_name = "my-bucket"
+  glue_table_config = {
+    table_name    = "events_partitioned"
+    database_name = "analytics_db"
+    table_type    = "EXTERNAL_TABLE"
 
-  sns_notifications = [
-    {
-      id            = "upload-notification"
-      topic_arn     = "arn:aws:sns:us-east-1:123456789012:my-topic"
-      events        = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
-      filter_prefix = "uploads/"
+    storage_descriptor = {
+      location      = "s3://my-bucket/events/"
+      input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+      output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+      columns = [
+        { name = "event_id", type = "string" },
+        { name = "user_id", type = "string" },
+        { name = "event_data", type = "string" }
+      ]
+
+      ser_de_info = {
+        serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+      }
     }
-  ]
-}
-```
 
-### S3 Event Notification with Lambda
-
-```hcl
-module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
-
-  bucket_name = "my-bucket"
-
-  lambda_notifications = [
-    {
-      id                  = "process-uploads"
-      lambda_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:my-function"
-      events              = ["s3:ObjectCreated:*"]
-      filter_suffix       = ".json"
-    }
-  ]
-}
-```
-
-### S3 Event Notification with Multiple Targets
-
-```hcl
-module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
-
-  bucket_name = "my-bucket"
-
-  sqs_notifications = [
-    {
-      id        = "queue-notification"
-      queue_arn = "arn:aws:sqs:us-east-1:123456789012:my-queue"
-      events    = ["s3:ObjectCreated:*"]
-    }
-  ]
-
-  sns_notifications = [
-    {
-      id        = "topic-notification"
-      topic_arn = "arn:aws:sns:us-east-1:123456789012:my-topic"
-      events    = ["s3:ObjectRemoved:*"]
-    }
-  ]
-
-  lambda_notifications = [
-    {
-      id                  = "lambda-notification"
-      lambda_function_arn = "arn:aws:lambda:us-east-1:123456789012:function:my-function"
-      events              = ["s3:ObjectCreated:Put"]
-      filter_prefix       = "processed/"
-    }
-  ]
+    partition_keys = [
+      { name = "year", type = "string" },
+      { name = "month", type = "string" },
+      { name = "day", type = "string" }
+    ]
+  }
 }
 ```
 
 ### Using JSON Input
 
 ```bash
-terraform apply -var='region=us-east-1' -var='s3={"bucket_name":"my-bucket","bucket_keys":["raw-data/csv","raw-data/json"],"versioning":true,"sse_algorithm":"aws:kms","kms_key_alias":"SB-KMS"}'
+terraform apply -var='glue_table_config={"table_name":"my_table","database_name":"my_db","storage_descriptor":{"location":"s3://bucket/data/","input_format":"org.apache.hadoop.mapred.TextInputFormat","output_format":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","columns":[{"name":"id","type":"int"}],"ser_de_info":{"serialization_library":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}}}'
 ```
 
 ## Examples
 
-### Bucket Examples
-
 | Example | Description |
 |---------|-------------|
-| [basic](examples/bucket/basic) | Simple S3 bucket |
-| [versioning](examples/bucket/versioning) | S3 bucket with versioning enabled |
-| [sse-s3](examples/bucket/sse-s3) | S3 bucket with SSE-S3 encryption |
-| [sse-kms](examples/bucket/sse-kms) | S3 bucket with SSE-KMS encryption |
-| [folders](examples/bucket/folders) | S3 bucket with folder structure |
-
-### Event Notification Examples
-
-| Example | Description |
-|---------|-------------|
-| [sqs](examples/event-notification/sqs) | S3 event notification to SQS |
-| [sns](examples/event-notification/sns) | S3 event notification to SNS |
-| [lambda](examples/event-notification/lambda) | S3 event notification to Lambda |
+| [basic](examples/basic) | Basic Glue Catalog Table with CSV format |
+| [parquet](examples/parquet) | Glue Catalog Table with Parquet format |
+| [partitioned](examples/partitioned) | Glue Catalog Table with partition keys |
 
 ## Requirements
 
@@ -257,109 +151,87 @@ terraform apply -var='region=us-east-1' -var='s3={"bucket_name":"my-bucket","buc
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
-| s3_config | Configuration object for S3 bucket | `object` | - | yes |
+| glue_table_config | Configuration object for Glue Catalog Table | `object` | - | yes |
 
-### s3_config Object Properties
+### glue_table_config Object Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| bucket_name | string | - | Name of the S3 bucket (required) |
-| bucket_keys | list(string) | [] | List of folder prefixes to create |
-| versioning | bool | false | Enable versioning on the bucket |
-| sse_algorithm | string | null | Encryption algorithm: `AES256` (SSE-S3) or `aws:kms` (SSE-KMS) |
-| kms_key_alias | string | null | KMS key alias (required when sse_algorithm is `aws:kms`) |
-| bucket_policy | string | null | JSON bucket policy document |
+| table_name | string | - | Name of the table (required) |
+| database_name | string | - | Name of the database (required) |
+| catalog_id | string | null | ID of the Glue Catalog (defaults to AWS account ID) |
+| description | string | null | Description of the table |
+| owner | string | null | Owner of the table |
+| retention | number | 0 | Retention time for the table |
+| table_type | string | "EXTERNAL_TABLE" | Type of table: `EXTERNAL_TABLE`, `GOVERNED`, or `VIRTUAL_VIEW` |
+| parameters | map(string) | {} | Table parameters |
+| storage_descriptor | object | null | Storage descriptor configuration |
+| partition_keys | list(object) | [] | Partition key definitions |
+| target_table | object | null | Target table for resource links |
+
+### storage_descriptor Object Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| location | string | null | S3 location of the table data |
+| input_format | string | null | Input format class |
+| output_format | string | null | Output format class |
+| compressed | bool | false | Whether data is compressed |
+| number_of_buckets | number | -1 | Number of buckets |
+| bucket_columns | list(string) | null | Bucket column names |
+| stored_as_sub_directories | bool | false | Whether stored as subdirectories |
+| parameters | map(string) | {} | Storage parameters |
+| columns | list(object) | [] | Column definitions |
+| ser_de_info | object | null | SerDe configuration |
+| sort_columns | list(object) | null | Sort column configuration |
+| skewed_info | object | null | Skewed data configuration |
+| schema_reference | object | null | Schema registry reference |
+
+### Column Object Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| name | string | - | Column name (required) |
+| type | string | - | Column data type (required) |
+| comment | string | null | Column comment |
+| parameters | map(string) | null | Column parameters |
+
+### partition_keys Object Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| name | string | - | Partition key name (required) |
+| type | string | - | Partition key data type (required) |
+| comment | string | null | Partition key comment |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| bucket_id | The name of the bucket |
-| bucket_arn | The ARN of the bucket |
-| bucket_domain_name | The bucket domain name |
-| versioning_enabled | Whether versioning is enabled |
-| bucket_keys | The bucket keys created in the bucket |
-| bucket_region | The AWS region where the bucket is located |
-
-## Event Notification Module
-
-### Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|----------|
-| enabled | Whether to create the S3 event notification | bool | true | no |
-| bucket_name | Name of the S3 bucket to configure notifications for | string | - | yes |
-| sqs_notifications | List of SQS queue notification configurations | list(object) | [] | no |
-| sns_notifications | List of SNS topic notification configurations | list(object) | [] | no |
-| lambda_notifications | List of Lambda function notification configurations | list(object) | [] | no |
-
-### SQS Notification Object Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| id | string | - | Unique identifier for the notification |
-| queue_arn | string | - | ARN of the SQS queue |
-| events | list(string) | ["s3:ObjectCreated:*"] | S3 events to trigger notification |
-| filter_prefix | string | null | Object key prefix filter |
-| filter_suffix | string | null | Object key suffix filter |
-
-### SNS Notification Object Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| id | string | - | Unique identifier for the notification |
-| topic_arn | string | - | ARN of the SNS topic |
-| events | list(string) | ["s3:ObjectCreated:*"] | S3 events to trigger notification |
-| filter_prefix | string | null | Object key prefix filter |
-| filter_suffix | string | null | Object key suffix filter |
-
-### Lambda Notification Object Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| id | string | - | Unique identifier for the notification |
-| lambda_function_arn | string | - | ARN of the Lambda function |
-| events | list(string) | ["s3:ObjectCreated:*"] | S3 events to trigger notification |
-| filter_prefix | string | null | Object key prefix filter |
-| filter_suffix | string | null | Object key suffix filter |
-
-### Event Notification Outputs
-
-| Name | Description |
-|------|-------------|
-| notification_configured | Whether S3 event notifications were configured |
-| bucket_name | The S3 bucket name with notifications configured |
-| sqs_notification_count | Number of SQS notification configurations |
-| sns_notification_count | Number of SNS notification configurations |
-| lambda_notification_count | Number of Lambda notification configurations |
+| table_id | The ID of the Glue Catalog Table (catalog_id:database_name:table_name) |
+| table_name | The name of the Glue Catalog Table |
+| table_arn | The ARN of the Glue Catalog Table |
+| database_name | The name of the database containing the table |
+| catalog_id | The catalog ID (AWS account ID) |
+| table_type | The type of the table |
+| storage_location | The S3 location of the table data |
+| partition_keys | The partition keys of the table |
+| columns | The columns of the table |
 
 ## Resources Created
 
-### Bucket Module
-
 | Resource | Description |
 |----------|-------------|
-| aws_s3_bucket | The S3 bucket |
-| aws_s3_bucket_versioning | Versioning configuration |
-| aws_s3_bucket_public_access_block | Blocks all public access |
-| aws_s3_bucket_server_side_encryption_configuration | Encryption configuration (conditional) |
-| aws_s3_bucket_policy | Bucket policy (conditional) |
-| aws_s3_object | Folder placeholders (conditional) |
-
-### Event Notification Module
-
-| Resource | Description |
-|----------|-------------|
-| aws_s3_bucket_notification | S3 event notification configuration |
+| aws_glue_catalog_table | The Glue Catalog Table |
 
 ## Validation
 
 The module validates inputs and provides descriptive error messages for:
 
-- Empty bucket name
-- Bucket name exceeding 63 characters
-- Invalid sse_algorithm value
-- Missing kms_key_alias when using SSE-KMS
+- Empty table name
+- Empty database name
+- Invalid table_type value
+- Negative retention value
 
 ## Testing
 
@@ -375,19 +247,17 @@ go test -v -timeout 30m
 
 | Test | Description |
 |------|-------------|
-| TestS3BucketBasic | Basic bucket creation |
-| TestS3BucketVersioning | Bucket with versioning |
-| TestS3BucketSSES3 | Bucket with SSE-S3 encryption |
-| TestS3BucketSSEKMS | Bucket with SSE-KMS encryption |
-| TestS3BucketWithFolders | Bucket with folder structure |
+| TestGlueCatalogTableBasic | Basic table creation with CSV format |
+| TestGlueCatalogTableParquet | Table with Parquet format |
+| TestGlueCatalogTablePartitioned | Table with partition keys |
 
 AWS credentials must be configured via environment variables or AWS CLI profile.
 
 ## CI/CD Configuration
 
 The CI workflow runs on:
-- Push to `main`, `feature/**`, and `bug/**` branches (when `modules/**` changes)
-- Pull requests to `main` (when `modules/**` changes)
+- Push to `main`, `feature/**`, and `bug/**` branches
+- Pull requests to `main`
 - Manual workflow dispatch
 
 The workflow includes:
@@ -413,12 +283,3 @@ The workflow includes:
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details.
-
-## Breaking Changes
-
-### v2.0.0
-
-- **Module path changed**: The bucket module path changed from `modules/aws-s3-bucket` to `modules/bucket`. Update your source references accordingly.
-- **Output renamed**: `versioning_enabled` output renamed to `versioning_status`.
-- **Examples restructured**: Examples moved from `examples/<name>` to `examples/bucket/<name>` and `examples/event-notification/<name>`.
-- **New event-notification module**: Added separate module for S3 event notifications supporting SQS, SNS, and Lambda.
