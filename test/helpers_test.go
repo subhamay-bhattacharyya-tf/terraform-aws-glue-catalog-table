@@ -8,19 +8,20 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/glue"
 	"github.com/stretchr/testify/require"
 )
 
-type S3BucketProps struct {
-	Name              string
-	VersioningEnabled bool
-	SSEAlgorithm      string
-	KMSKeyID          string
+type GlueTableProps struct {
+	Name           string
+	DatabaseName   string
+	TableType      string
+	Location       string
+	PartitionKeys  []string
+	Columns        []string
 }
 
-func getS3Client(t *testing.T) *s3.Client {
+func getGlueClient(t *testing.T) *glue.Client {
 	t.Helper()
 
 	region := os.Getenv("AWS_REGION")
@@ -31,63 +32,59 @@ func getS3Client(t *testing.T) *s3.Client {
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	require.NoError(t, err, "Failed to load AWS config")
 
-	return s3.NewFromConfig(cfg)
+	return glue.NewFromConfig(cfg)
 }
 
-func bucketExists(t *testing.T, client *s3.Client, bucketName string) bool {
+func tableExists(t *testing.T, client *glue.Client, databaseName, tableName string) bool {
 	t.Helper()
 
-	_, err := client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
-		Bucket: &bucketName,
+	_, err := client.GetTable(context.TODO(), &glue.GetTableInput{
+		DatabaseName: &databaseName,
+		Name:         &tableName,
 	})
 
 	return err == nil
 }
 
-func fetchBucketProps(t *testing.T, client *s3.Client, bucketName string) S3BucketProps {
+func fetchTableProps(t *testing.T, client *glue.Client, databaseName, tableName string) GlueTableProps {
 	t.Helper()
 
-	props := S3BucketProps{Name: bucketName}
+	props := GlueTableProps{
+		Name:         tableName,
+		DatabaseName: databaseName,
+	}
 
-	// Check versioning
-	versioningOutput, err := client.GetBucketVersioning(context.TODO(), &s3.GetBucketVersioningInput{
-		Bucket: &bucketName,
+	output, err := client.GetTable(context.TODO(), &glue.GetTableInput{
+		DatabaseName: &databaseName,
+		Name:         &tableName,
 	})
-	require.NoError(t, err, "Failed to get bucket versioning")
-	props.VersioningEnabled = versioningOutput.Status == types.BucketVersioningStatusEnabled
+	require.NoError(t, err, "Failed to get table")
 
-	// Check encryption
-	encryptionOutput, err := client.GetBucketEncryption(context.TODO(), &s3.GetBucketEncryptionInput{
-		Bucket: &bucketName,
-	})
-	if err == nil && len(encryptionOutput.ServerSideEncryptionConfiguration.Rules) > 0 {
-		rule := encryptionOutput.ServerSideEncryptionConfiguration.Rules[0]
-		if rule.ApplyServerSideEncryptionByDefault != nil {
-			props.SSEAlgorithm = string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm)
-			if rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID != nil {
-				props.KMSKeyID = *rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
+	if output.Table != nil {
+		if output.Table.TableType != nil {
+			props.TableType = *output.Table.TableType
+		}
+
+		if output.Table.StorageDescriptor != nil && output.Table.StorageDescriptor.Location != nil {
+			props.Location = *output.Table.StorageDescriptor.Location
+		}
+
+		if output.Table.StorageDescriptor != nil {
+			for _, col := range output.Table.StorageDescriptor.Columns {
+				if col.Name != nil {
+					props.Columns = append(props.Columns, *col.Name)
+				}
+			}
+		}
+
+		for _, pk := range output.Table.PartitionKeys {
+			if pk.Name != nil {
+				props.PartitionKeys = append(props.PartitionKeys, *pk.Name)
 			}
 		}
 	}
 
 	return props
-}
-
-func listBucketObjects(t *testing.T, client *s3.Client, bucketName string) []string {
-	t.Helper()
-
-	output, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket: &bucketName,
-	})
-	require.NoError(t, err, "Failed to list bucket objects")
-
-	var keys []string
-	for _, obj := range output.Contents {
-		if obj.Key != nil {
-			keys = append(keys, *obj.Key)
-		}
-	}
-	return keys
 }
 
 func mustEnv(t *testing.T, key string) string {
