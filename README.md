@@ -163,7 +163,7 @@ terraform apply -var='glue_table_config={"table_name":"my_table","database_name"
 | description | string | null | Description of the table |
 | owner | string | null | Owner of the table |
 | retention | number | 0 | Retention time for the table |
-| table_type | string | "EXTERNAL_TABLE" | Type of table: `EXTERNAL_TABLE`, `GOVERNED`, or `VIRTUAL_VIEW` |
+| table_type | string | "EXTERNAL_TABLE" | Type of table: `EXTERNAL_TABLE`, `GOVERNED`, `VIRTUAL_VIEW`, or `ICEBERG` |
 | parameters | map(string) | {} | Table parameters |
 | storage_descriptor | object | null | Storage descriptor configuration |
 | partition_keys | list(object) | [] | Partition key definitions |

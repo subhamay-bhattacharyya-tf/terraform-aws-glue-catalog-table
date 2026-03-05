@@ -3,50 +3,37 @@
 # AWS Glue Catalog Table Module - Outputs
 # ============================================================================
 
-output "table_id" {
-  description = "The ID of the Glue Catalog Table (catalog_id:database_name:table_name)"
-  value       = aws_glue_catalog_table.this.id
+output "tables" {
+  description = "Map of all created Glue Catalog Tables with their attributes"
+  value = {
+    for k, v in aws_glue_catalog_table.this : k => {
+      id               = v.id
+      name             = v.name
+      arn              = v.arn
+      database_name    = v.database_name
+      catalog_id       = v.catalog_id
+      table_type       = v.table_type
+      storage_location = try(v.storage_descriptor[0].location, null)
+      partition_keys   = [for pk in v.partition_keys : pk.name]
+      columns = try([for col in v.storage_descriptor[0].columns : {
+        name = col.name
+        type = col.type
+      }], [])
+    }
+  }
 }
 
-output "table_name" {
-  description = "The name of the Glue Catalog Table"
-  value       = aws_glue_catalog_table.this.name
+output "table_ids" {
+  description = "Map of table keys to their IDs"
+  value       = { for k, v in aws_glue_catalog_table.this : k => v.id }
 }
 
-output "table_arn" {
-  description = "The ARN of the Glue Catalog Table"
-  value       = aws_glue_catalog_table.this.arn
+output "table_arns" {
+  description = "Map of table keys to their ARNs"
+  value       = { for k, v in aws_glue_catalog_table.this : k => v.arn }
 }
 
-output "database_name" {
-  description = "The name of the database containing the table"
-  value       = aws_glue_catalog_table.this.database_name
-}
-
-output "catalog_id" {
-  description = "The catalog ID (AWS account ID)"
-  value       = aws_glue_catalog_table.this.catalog_id
-}
-
-output "table_type" {
-  description = "The type of the table"
-  value       = aws_glue_catalog_table.this.table_type
-}
-
-output "storage_location" {
-  description = "The S3 location of the table data"
-  value       = try(aws_glue_catalog_table.this.storage_descriptor[0].location, null)
-}
-
-output "partition_keys" {
-  description = "The partition keys of the table"
-  value       = [for pk in aws_glue_catalog_table.this.partition_keys : pk.name]
-}
-
-output "columns" {
-  description = "The columns of the table"
-  value = try([for col in aws_glue_catalog_table.this.storage_descriptor[0].columns : {
-    name = col.name
-    type = col.type
-  }], [])
+output "table_names" {
+  description = "Map of table keys to their names"
+  value       = { for k, v in aws_glue_catalog_table.this : k => v.name }
 }

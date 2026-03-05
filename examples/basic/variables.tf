@@ -10,8 +10,8 @@ variable "region" {
 }
 
 variable "glue_table" {
-  description = "Glue Catalog Table configuration"
-  type = object({
+  description = "Glue Catalog Table configuration map"
+  type = map(object({
     table_name    = string
     database_name = string
     description   = optional(string, null)
@@ -33,5 +33,5 @@ variable "glue_table" {
         parameters            = optional(map(string), {})
       }), null)
     }), null)
-  })
+  }))
 }

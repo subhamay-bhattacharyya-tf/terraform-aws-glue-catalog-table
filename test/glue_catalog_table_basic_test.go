@@ -24,19 +24,21 @@ func TestGlueCatalogTableBasic(t *testing.T) {
 	tfDir := "../examples/basic"
 
 	glueConfig := map[string]interface{}{
-		"table_name":    tableName,
-		"database_name": databaseName,
-		"table_type":    "EXTERNAL_TABLE",
-		"storage_descriptor": map[string]interface{}{
-			"location":      fmt.Sprintf("s3://test-bucket-%s/data/", unique),
-			"input_format":  "org.apache.hadoop.mapred.TextInputFormat",
-			"output_format": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
-			"columns": []map[string]interface{}{
-				{"name": "id", "type": "int"},
-				{"name": "name", "type": "string"},
-			},
-			"ser_de_info": map[string]interface{}{
-				"serialization_library": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+		"table1": map[string]interface{}{
+			"table_name":    tableName,
+			"database_name": databaseName,
+			"table_type":    "EXTERNAL_TABLE",
+			"storage_descriptor": map[string]interface{}{
+				"location":      fmt.Sprintf("s3://test-bucket-%s/data/", unique),
+				"input_format":  "org.apache.hadoop.mapred.TextInputFormat",
+				"output_format": "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat",
+				"columns": []map[string]interface{}{
+					{"name": "id", "type": "int"},
+					{"name": "name", "type": "string"},
+				},
+				"ser_de_info": map[string]interface{}{
+					"serialization_library": "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+				},
 			},
 		},
 	}
@@ -60,9 +62,6 @@ func TestGlueCatalogTableBasic(t *testing.T) {
 	exists := tableExists(t, client, databaseName, tableName)
 	require.True(t, exists, "Expected table %q to exist in database %q", tableName, databaseName)
 
-	outputTableName := terraform.Output(t, tfOptions, "table_name")
-	require.Equal(t, tableName, outputTableName)
-
-	outputDatabaseName := terraform.Output(t, tfOptions, "database_name")
-	require.Equal(t, databaseName, outputDatabaseName)
+	outputTableNames := terraform.OutputMap(t, tfOptions, "table_names")
+	require.Equal(t, tableName, outputTableNames["table1"])
 }

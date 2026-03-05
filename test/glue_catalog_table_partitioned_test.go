@@ -24,26 +24,28 @@ func TestGlueCatalogTablePartitioned(t *testing.T) {
 	tfDir := "../examples/partitioned"
 
 	glueConfig := map[string]interface{}{
-		"table_name":    tableName,
-		"database_name": databaseName,
-		"table_type":    "EXTERNAL_TABLE",
-		"storage_descriptor": map[string]interface{}{
-			"location":      fmt.Sprintf("s3://test-bucket-%s/events/", unique),
-			"input_format":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-			"output_format": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
-			"columns": []map[string]interface{}{
-				{"name": "event_id", "type": "string"},
-				{"name": "user_id", "type": "string"},
-				{"name": "event_data", "type": "string"},
+		"partitioned_table": map[string]interface{}{
+			"table_name":    tableName,
+			"database_name": databaseName,
+			"table_type":    "EXTERNAL_TABLE",
+			"storage_descriptor": map[string]interface{}{
+				"location":      fmt.Sprintf("s3://test-bucket-%s/events/", unique),
+				"input_format":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+				"output_format": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+				"columns": []map[string]interface{}{
+					{"name": "event_id", "type": "string"},
+					{"name": "user_id", "type": "string"},
+					{"name": "event_data", "type": "string"},
+				},
+				"ser_de_info": map[string]interface{}{
+					"serialization_library": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+				},
 			},
-			"ser_de_info": map[string]interface{}{
-				"serialization_library": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+			"partition_keys": []map[string]interface{}{
+				{"name": "year", "type": "string"},
+				{"name": "month", "type": "string"},
+				{"name": "day", "type": "string"},
 			},
-		},
-		"partition_keys": []map[string]interface{}{
-			{"name": "year", "type": "string"},
-			{"name": "month", "type": "string"},
-			{"name": "day", "type": "string"},
 		},
 	}
 

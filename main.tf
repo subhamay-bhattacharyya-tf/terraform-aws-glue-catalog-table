@@ -1,22 +1,24 @@
 # -- main.tf
 # ============================================================================
 # AWS Glue Catalog Table Resource
-# Creates and manages a Glue Catalog Table with configurable schema, 
+# Creates and manages Glue Catalog Tables with configurable schema, 
 # storage descriptor, and partition keys
 # ============================================================================
 
 resource "aws_glue_catalog_table" "this" {
-  name          = var.glue_table_config.table_name
-  database_name = var.glue_table_config.database_name
-  catalog_id    = var.glue_table_config.catalog_id
-  description   = var.glue_table_config.description
-  owner         = var.glue_table_config.owner
-  retention     = var.glue_table_config.retention
-  table_type    = var.glue_table_config.table_type
-  parameters    = var.glue_table_config.parameters
+  for_each = var.glue_table_config
+
+  name          = each.value.table_name
+  database_name = each.value.database_name
+  catalog_id    = each.value.catalog_id
+  description   = each.value.description
+  owner         = each.value.owner
+  retention     = each.value.retention
+  table_type    = each.value.table_type
+  parameters    = each.value.parameters
 
   dynamic "storage_descriptor" {
-    for_each = var.glue_table_config.storage_descriptor != null ? [var.glue_table_config.storage_descriptor] : []
+    for_each = each.value.storage_descriptor != null ? [each.value.storage_descriptor] : []
     content {
       location                  = storage_descriptor.value.location
       input_format              = storage_descriptor.value.input_format
@@ -82,7 +84,7 @@ resource "aws_glue_catalog_table" "this" {
   }
 
   dynamic "partition_keys" {
-    for_each = var.glue_table_config.partition_keys != null ? var.glue_table_config.partition_keys : []
+    for_each = each.value.partition_keys != null ? each.value.partition_keys : []
     content {
       name    = partition_keys.value.name
       type    = partition_keys.value.type
@@ -91,7 +93,7 @@ resource "aws_glue_catalog_table" "this" {
   }
 
   dynamic "target_table" {
-    for_each = var.glue_table_config.target_table != null ? [var.glue_table_config.target_table] : []
+    for_each = each.value.target_table != null ? [each.value.target_table] : []
     content {
       catalog_id    = target_table.value.catalog_id
       database_name = target_table.value.database_name

@@ -4,8 +4,8 @@
 # ============================================================================
 
 variable "glue_table_config" {
-  description = "Configuration object for AWS Glue Catalog Table"
-  type = object({
+  description = "Map of Glue Catalog Table configurations keyed by table identifier"
+  type = map(object({
     table_name    = string
     database_name = string
     catalog_id    = optional(string, null)
@@ -20,8 +20,8 @@ variable "glue_table_config" {
       input_format              = optional(string, null)
       output_format             = optional(string, null)
       compressed                = optional(bool, false)
-      number_of_buckets         = optional(number, -1)
-      bucket_columns            = optional(list(string), null)
+      number_of_buckets         = optional(number, null)
+      bucket_columns            = optional(list(string), [])
       stored_as_sub_directories = optional(bool, false)
       parameters                = optional(map(string), {})
 
@@ -71,25 +71,37 @@ variable "glue_table_config" {
       name          = string
       region        = optional(string, null)
     }), null)
-  })
+  }))
+
+  default = {}
 
   validation {
-    condition     = length(var.glue_table_config.table_name) > 0
+    condition     = alltrue([for k, v in var.glue_table_config : length(v.table_name) > 0])
     error_message = "Table name must not be empty."
   }
 
   validation {
-    condition     = length(var.glue_table_config.database_name) > 0
+    condition     = alltrue([for k, v in var.glue_table_config : length(v.database_name) > 0])
     error_message = "Database name must not be empty."
   }
 
   validation {
-    condition     = var.glue_table_config.table_type == null ? true : contains(["EXTERNAL_TABLE", "GOVERNED", "VIRTUAL_VIEW"], var.glue_table_config.table_type)
-    error_message = "table_type must be 'EXTERNAL_TABLE', 'GOVERNED', or 'VIRTUAL_VIEW'."
+    condition     = alltrue([for k, v in var.glue_table_config : v.table_type == null ? true : contains(["EXTERNAL_TABLE", "GOVERNED", "VIRTUAL_VIEW", "ICEBERG"], v.table_type)])
+    error_message = "table_type must be 'EXTERNAL_TABLE', 'GOVERNED', 'VIRTUAL_VIEW', or 'ICEBERG'."
   }
 
   validation {
-    condition     = var.glue_table_config.retention >= 0
+    condition     = alltrue([for k, v in var.glue_table_config : v.retention >= 0])
     error_message = "retention must be a non-negative number."
+  }
+
+  validation {
+    condition = alltrue([
+      for k, v in var.glue_table_config : v.table_type != "ICEBERG" || (
+        v.parameters != null &&
+        lookup(v.parameters, "metadata_location", null) != null
+      )
+    ])
+    error_message = "metadata_location parameter is required when table_type is 'ICEBERG'."
   }
 }

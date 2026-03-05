@@ -24,23 +24,25 @@ func TestGlueCatalogTableParquet(t *testing.T) {
 	tfDir := "../examples/parquet"
 
 	glueConfig := map[string]interface{}{
-		"table_name":    tableName,
-		"database_name": databaseName,
-		"table_type":    "EXTERNAL_TABLE",
-		"storage_descriptor": map[string]interface{}{
-			"location":      fmt.Sprintf("s3://test-bucket-%s/parquet/", unique),
-			"input_format":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-			"output_format": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
-			"compressed":    true,
-			"columns": []map[string]interface{}{
-				{"name": "id", "type": "bigint"},
-				{"name": "event_time", "type": "timestamp"},
-				{"name": "payload", "type": "string"},
-			},
-			"ser_de_info": map[string]interface{}{
-				"serialization_library": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
-				"parameters": map[string]interface{}{
-					"serialization.format": "1",
+		"parquet_table": map[string]interface{}{
+			"table_name":    tableName,
+			"database_name": databaseName,
+			"table_type":    "EXTERNAL_TABLE",
+			"storage_descriptor": map[string]interface{}{
+				"location":      fmt.Sprintf("s3://test-bucket-%s/parquet/", unique),
+				"input_format":  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+				"output_format": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+				"compressed":    true,
+				"columns": []map[string]interface{}{
+					{"name": "id", "type": "bigint"},
+					{"name": "event_time", "type": "timestamp"},
+					{"name": "payload", "type": "string"},
+				},
+				"ser_de_info": map[string]interface{}{
+					"serialization_library": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+					"parameters": map[string]interface{}{
+						"serialization.format": "1",
+					},
 				},
 			},
 		},

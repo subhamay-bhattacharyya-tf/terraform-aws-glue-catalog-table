@@ -4,7 +4,8 @@
 # ============================================================================
 
 resource "aws_glue_catalog_database" "this" {
-  name = var.glue_table.database_name
+  for_each = toset([for k, v in var.glue_table : v.database_name])
+  name     = each.value
 }
 
 module "glue_catalog_table" {

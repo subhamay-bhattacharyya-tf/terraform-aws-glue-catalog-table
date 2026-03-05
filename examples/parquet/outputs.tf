@@ -3,27 +3,22 @@
 # Example: Glue Catalog Table with Parquet Format - Outputs
 # ============================================================================
 
-output "table_id" {
-  description = "The ID of the Glue Catalog Table"
-  value       = module.glue_catalog_table.table_id
+output "tables" {
+  description = "All created Glue Catalog Tables"
+  value       = module.glue_catalog_table.tables
 }
 
-output "table_name" {
-  description = "The name of the Glue Catalog Table"
-  value       = module.glue_catalog_table.table_name
+output "table_ids" {
+  description = "Map of table keys to their IDs"
+  value       = module.glue_catalog_table.table_ids
 }
 
-output "table_arn" {
-  description = "The ARN of the Glue Catalog Table"
-  value       = module.glue_catalog_table.table_arn
+output "table_arns" {
+  description = "Map of table keys to their ARNs"
+  value       = module.glue_catalog_table.table_arns
 }
 
-output "database_name" {
-  description = "The database name"
-  value       = module.glue_catalog_table.database_name
-}
-
-output "storage_location" {
-  description = "The S3 location of the table data"
-  value       = module.glue_catalog_table.storage_location
+output "table_names" {
+  description = "Map of table keys to their names"
+  value       = module.glue_catalog_table.table_names
 }
