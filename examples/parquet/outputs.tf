@@ -1,0 +1,29 @@
+# -- examples/parquet/outputs.tf
+# ============================================================================
+# Example: Glue Catalog Table with Parquet Format - Outputs
+# ============================================================================
+
+output "table_id" {
+  description = "The ID of the Glue Catalog Table"
+  value       = module.glue_catalog_table.table_id
+}
+
+output "table_name" {
+  description = "The name of the Glue Catalog Table"
+  value       = module.glue_catalog_table.table_name
+}
+
+output "table_arn" {
+  description = "The ARN of the Glue Catalog Table"
+  value       = module.glue_catalog_table.table_arn
+}
+
+output "database_name" {
+  description = "The database name"
+  value       = module.glue_catalog_table.database_name
+}
+
+output "storage_location" {
+  description = "The S3 location of the table data"
+  value       = module.glue_catalog_table.storage_location
+}

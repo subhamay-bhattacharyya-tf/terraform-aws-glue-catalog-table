@@ -1,6 +1,6 @@
 # Terraform AWS S3 Bucket Module
 
-![Release](https://github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/actions/workflows/ci.yaml/badge.svg)&nbsp;![AWS](https://img.shields.io/badge/AWS-232F3E?logo=amazonaws&logoColor=white)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-tf/terraform-aws-s3)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/dd8a07e256e7af69c3de7f120a895d97/raw/terraform-aws-s3.json?)
+![Release](https://github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/actions/workflows/ci.yaml/badge.svg)&nbsp;![AWS](https://img.shields.io/badge/AWS-232F3E?logo=amazonaws&logoColor=white)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/2983112d16d4dd7076415b0c523f1c98/raw/terraform-aws-glue-catalog-table.json?)
 
 A Terraform module for creating and managing AWS S3 buckets with optional encryption (SSE-S3 or SSE-KMS), versioning, folder structure, bucket policy, and event notifications.
 
@@ -28,7 +28,7 @@ A Terraform module for creating and managing AWS S3 buckets with optional encryp
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name = "my-bucket"
@@ -40,7 +40,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name = "my-versioned-bucket"
@@ -53,7 +53,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name   = "my-encrypted-bucket"
@@ -66,7 +66,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name   = "my-kms-bucket"
@@ -80,7 +80,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name = "my-data-bucket"
@@ -93,7 +93,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_bucket" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/bucket?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/bucket?ref=main"
 
   s3_config = {
     bucket_name   = "my-policy-bucket"
@@ -125,7 +125,7 @@ module "s3_bucket" {
 
 ```hcl
 module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/event-notification?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
 
   bucket_name = "my-bucket"
 
@@ -145,7 +145,7 @@ module "s3_notification" {
 
 ```hcl
 module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/event-notification?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
 
   bucket_name = "my-bucket"
 
@@ -164,7 +164,7 @@ module "s3_notification" {
 
 ```hcl
 module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/event-notification?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
 
   bucket_name = "my-bucket"
 
@@ -183,7 +183,7 @@ module "s3_notification" {
 
 ```hcl
 module "s3_notification" {
-  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-s3/modules/event-notification?ref=main"
+  source = "github.com/subhamay-bhattacharyya-tf/terraform-aws-glue-catalog-table/modules/event-notification?ref=main"
 
   bucket_name = "my-bucket"
 
